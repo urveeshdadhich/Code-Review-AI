@@ -13,7 +13,7 @@ class ReviewIssue(BaseModel):
     severity: Severity = Field(description="The severity level of the issue.")
     category: str = Field(description="The category of the issue (e.g., security, performance, clean_code, bugs).")
     explanation: str = Field(description="A detailed explanation of why this is an issue.")
-    suggested_fix: str = Field(description="A code snippet or description of how to fix the issue.")
+    suggested_fix: str = Field(description="A complete, copy-pasteable replacement code block (formatted with markdown backticks) that fully resolves the issue.")
 
 class CodeReviewResult(BaseModel):
     issues: List[ReviewIssue] = Field(default_factory=list, description="A list of issues found during the review.")

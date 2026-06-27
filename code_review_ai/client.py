@@ -85,6 +85,9 @@ class LLMReviewClient:
         prompt = f"""
         You are an expert Principal Staff Engineer and security auditor.
         Review the following code for security vulnerabilities, performance bottlenecks, clean code principles, and bugs.
+        
+        CRITICAL: For every issue you find, the `suggested_fix` MUST contain the EXACT, fully-functioning replacement code block (using markdown code blocks) so the user can copy-paste it directly. Do not just describe the fix.
+        
         File: {file_path}
         
         Code:
