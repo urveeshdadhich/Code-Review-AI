@@ -27,8 +27,9 @@ CodeReviewAI intelligently analyzes your codebase for security vulnerabilities, 
 
 ## Installation
 
-To use this tool from anywhere on your system, run the automated installation script. This safely creates an isolated virtual environment and links the command globally without interfering with your system's Python packages.
+CodeReviewAI is fully cross-platform (Linux, macOS, and Windows).
 
+### Mac / Linux
 ```bash
 # 1. Make the script executable
 chmod +x install.sh
@@ -37,13 +38,16 @@ chmod +x install.sh
 ./install.sh
 ```
 
-### Uninstallation
-To completely remove the tool, its isolated environment, and the global symlink from your system:
-
-```bash
-chmod +x uninstall.sh
-./uninstall.sh
+### Windows
+Double-click the `install.bat` file, or run it from Command Prompt:
+```cmd
+install.bat
 ```
+
+### Uninstallation
+To completely remove the tool and its isolated environment:
+- **Mac/Linux**: Run `./uninstall.sh`
+- **Windows**: Double-click `uninstall.bat`
 *(The uninstaller will optionally ask if you wish to retain or delete your globally saved API keys).*
 
 ---

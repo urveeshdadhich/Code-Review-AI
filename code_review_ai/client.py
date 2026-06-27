@@ -28,7 +28,10 @@ def ensure_ollama_model(model_name: str):
                 c = Console()
                 c.print("\n[bold yellow]Ollama server is not running. Starting it in the background...[/bold yellow]")
                 # Start ollama serve in the background and detach
-                subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                kwargs = {}
+                if os.name == 'nt':
+                    kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+                subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kwargs)
                 import time
                 time.sleep(3)  # Give it a few seconds to spin up
                 # Retry listing
