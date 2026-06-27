@@ -48,7 +48,6 @@ install.bat
 To completely remove the tool and its isolated environment:
 - **Mac/Linux**: Run `./uninstall.sh`
 - **Windows**: Double-click `uninstall.bat`
-*(The uninstaller will optionally ask if you wish to retain or delete your globally saved API keys).*
 
 ---
 
