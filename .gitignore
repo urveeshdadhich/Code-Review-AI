@@ -44,3 +44,11 @@ venv.bak/
 
 # MacOS
 .DS_Store
+
+# Java
+*.class
+
+# Maven
+target/
+dependency-reduced-pom.xml
+TestJackson.java
