@@ -1,30 +1,45 @@
 @echo off
-echo Starting CodeReviewAI Installation for Windows...
+echo Starting Java CodeReviewAI Installation for Windows...
 
-python --version >nul 2>&1
+:: Check if javac is available
+javac -version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Error: Python could not be found. Please install Python.
-    pause
+    echo [ERROR] JDK 21 is not installed or not in PATH!
+    echo Please install JDK 21 and Maven manually from:
+    echo - https://adoptium.net/
+    echo - https://maven.apache.org/
     exit /b 1
 )
 
-set VENV_DIR=%USERPROFILE%\.code_review_ai_venv
-echo Creating virtual environment at %VENV_DIR% ...
-python -m venv "%VENV_DIR%"
+:: Check if mvn is available
+mvn -version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Maven is not installed or not in PATH!
+    echo Please install Maven manually.
+    exit /b 1
+)
 
-echo Installing dependencies...
-"%VENV_DIR%\Scripts\pip.exe" install --upgrade pip --no-cache-dir
-"%VENV_DIR%\Scripts\pip.exe" install . --no-cache-dir
+echo Compiling Native Java Executable...
+call mvn clean package
+if %errorlevel% neq 0 (
+    echo [ERROR] Maven build failed!
+    exit /b 1
+)
+
+set "INSTALL_DIR=%USERPROFILE%\.code_review_ai_java"
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+copy /Y target\code-review-ai-1.0-shaded.jar "%INSTALL_DIR%\app.jar" >nul
+
+set "BIN_DIR=%USERPROFILE%\.local\bin"
+if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
+
+echo @echo off > "%BIN_DIR%\cr.bat"
+echo java -jar "%INSTALL_DIR%\app.jar" %%* >> "%BIN_DIR%\cr.bat"
 
 echo.
-echo ======================================================
-echo Installation complete!
-echo ======================================================
-echo To run the tool from anywhere, you need to add it to your PATH.
-echo Run this exact command in PowerShell to add it permanently:
-echo.
-echo [Environment]::SetEnvironmentVariable("Path", $env:Path + ";$env:USERPROFILE\.code_review_ai_venv\Scripts", "User")
-echo.
-echo After running that, close this window, open a new terminal, and type 'cr' to start!
-echo ======================================================
+echo =========================================================
+echo Installation complete! 
+echo Make sure "%BIN_DIR%" is added to your Windows PATH environment variable.
+echo You can then run 'cr' from anywhere in the command prompt.
+echo =========================================================
 pause

@@ -9,7 +9,7 @@ CodeReviewAI intelligently analyzes your codebase for security vulnerabilities, 
 ## Core Features
 
 - **Multi-Language Intelligence**  
-  Natively parses and chunks Python, Java, C, C++, Rust, Go, JavaScript, TypeScript, and Ruby out of the box using `tree-sitter`.
+  Seamlessly analyzes files of any language natively using core Java NIO utilities, sending raw contextual strings directly to advanced LLMs.
   
 - **Bring Your Own AI**  
   Connects directly to OpenAI, Anthropic (Claude), Google Gemini, and local offline Ollama models.
@@ -18,7 +18,7 @@ CodeReviewAI intelligently analyzes your codebase for security vulnerabilities, 
   When using local models via Ollama, the tool automatically detects if your server is down, silently starts it in the background, and dynamically pulls missing models before running the review.
 
 - **Sleek Interactive Wizard**  
-  A fully interactive, arrow-key-driven terminal UI built with `questionary`. No need to memorize CLI flags or complex arguments.
+  A fully interactive, arrow-key-driven terminal UI built natively in Java with `JLine`. No need to memorize CLI flags or complex arguments.
 
 - **Global Configuration**  
   API keys are saved securely to your home directory (`~/.code_review_ai.env`), ensuring they remain isolated from your project code with zero risk of accidental git leaks.

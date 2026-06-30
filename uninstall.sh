@@ -1,38 +1,40 @@
 #!/bin/bash
+echo "Uninstalling Java CodeReviewAI..."
 
-set -e
-
-echo "Starting CodeReviewAI Uninstallation..."
-
-# Remove the global symlink
-if [ -L "$HOME/.local/bin/cr" ]; then
-    echo "Removing global symlink from ~/.local/bin ..."
-    rm "$HOME/.local/bin/cr"
-elif [ -f "$HOME/.local/bin/cr" ]; then
-    echo "Removing global binary from ~/.local/bin ..."
-    rm "$HOME/.local/bin/cr"
+# Remove the executable wrapper
+BIN_FILE="$HOME/.local/bin/cr"
+if [ -f "$BIN_FILE" ]; then
+    rm "$BIN_FILE"
+    echo "Removed executable: $BIN_FILE"
+else
+    echo "Executable $BIN_FILE not found."
 fi
 
-# Remove the isolated virtual environment
-VENV_DIR="$HOME/.code_review_ai_venv"
-if [ -d "$VENV_DIR" ]; then
-    echo "Removing isolated virtual environment at $VENV_DIR ..."
-    rm -rf "$VENV_DIR"
+# Remove the JAR and its directory
+INSTALL_DIR="$HOME/.code_review_ai_java"
+if [ -d "$INSTALL_DIR" ]; then
+    rm -rf "$INSTALL_DIR"
+    echo "Removed app directory: $INSTALL_DIR"
+else
+    echo "App directory $INSTALL_DIR not found."
 fi
 
-# Ask about config file
-CONFIG_FILE="$HOME/.code_review_ai.env"
-if [ -f "$CONFIG_FILE" ]; then
-    read -p "Do you also want to delete your saved API keys at $CONFIG_FILE? (y/N) " -n 1 -r
+ENV_FILE="$HOME/.code_review_ai.env"
+if [ -f "$ENV_FILE" ]; then
+    read -p "Do you want to remove your saved API keys? (y/N) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        rm "$CONFIG_FILE"
-        echo "Deleted config file."
+        rm "$ENV_FILE"
+        echo "Removed API keys file: $ENV_FILE"
     else
-        echo "Kept config file intact."
+        echo "Kept API keys file."
     fi
 fi
 
-echo "======================================================"
-echo "Uninstallation complete!"
-echo "======================================================"
+echo ""
+echo "Note: JDK 21 and Maven were NOT uninstalled, as they might be used by other applications."
+echo "If you wish to remove them from your system entirely, run:"
+echo "  Arch Linux:    sudo pacman -Rns jdk21-openjdk maven"
+echo "  Ubuntu/Debian: sudo apt remove --purge openjdk-21-jdk maven"
+echo ""
+echo "Uninstallation completely finished!"
