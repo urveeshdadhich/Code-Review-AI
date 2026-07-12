@@ -1,6 +1,6 @@
 # CodeReviewAI
 
-A highly advanced, AI-powered Code Review CLI designed to run entirely within your terminal. 
+An AI-powered Code Review CLI designed to run entirely within your terminal. 
 
 CodeReviewAI intelligently analyzes your codebase for security vulnerabilities, clean code violations, performance bottlenecks, and logic bugs. It seamlessly bridges the gap between modern Large Language Models and your local development environment, outputting beautifully rendered markdown tables and utilizing an interactive wizard for a flawless developer experience.
 
