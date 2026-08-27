@@ -1,0 +1,3 @@
+# Ignore sample code files from GitHub language statistics
+sample_code/* linguist-documentation
+sample_code/** linguist-documentation
