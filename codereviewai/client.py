@@ -6,10 +6,17 @@ import requests
 from codereviewai.models import CodeReviewResult
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-3.1-pro-preview",
+    "gemini": "gemini-3.7-flash",
     "openai": "gpt-4o",
     "anthropic": "claude-3-5-sonnet-20241022",
 }
+
+GEMINI_PRIORITY_MODELS = [
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.1-pro-preview",
+    "gemini-3-pro-preview",
+]
 
 REVIEW_PROMPT_TEMPLATE = """You are a Principal Staff Engineer. Review the provided code for bugs, vulnerabilities, and logic errors.
 CRITICAL: Output ONLY valid JSON. Do not include markdown formatting or explanation outside the JSON.
@@ -36,7 +43,7 @@ class CodeReviewClient:
     def __init__(self, provider: str, api_key: str, model: Optional[str] = None, timeout: int = 120):
         self.provider = provider.lower()
         self.api_key = api_key
-        self.model = model or DEFAULT_MODELS.get(self.provider, "gemini-3.1-pro-preview")
+        self.model = model or DEFAULT_MODELS.get(self.provider, "gemini-3.7-flash")
         self.timeout = timeout
 
     def review_code(self, file_content: str, filename: str = "code") -> CodeReviewResult:
@@ -93,15 +100,37 @@ class CodeReviewClient:
         data = resp.json()
         return data["content"][0]["text"]
 
+    def _fetch_live_gemini_models(self) -> list[str]:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.api_key}"
+            resp = requests.get(url, timeout=10)
+            if resp.status_code == 200:
+                models_data = resp.json().get("models", [])
+                valid_models = []
+                for m in models_data:
+                    name = m.get("name", "").replace("models/", "")
+                    methods = m.get("supportedGenerationMethods", [])
+                    if "generateContent" in methods and "gemini" in name.lower():
+                        valid_models.append(name)
+                return valid_models
+        except Exception:
+            pass
+        return []
+
     def _call_gemini(self, prompt: str) -> str:
         fallback_models = [self.model]
-        candidates_pool = ["gemini-3.1-pro-preview", "gemini-3.6-flash", "gemini-2.0-flash"]
-        for m in candidates_pool:
+        for m in GEMINI_PRIORITY_MODELS:
             if m not in fallback_models:
                 fallback_models.append(m)
 
         last_error = None
+        attempted_models = set()
+
         for model_name in fallback_models:
+            if model_name in attempted_models:
+                continue
+            attempted_models.add(model_name)
+
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
             headers = {"Content-Type": "application/json"}
             payload = {
@@ -124,14 +153,33 @@ class CodeReviewClient:
                         import time
                         time.sleep(1.0 * (attempt + 1))
                         continue
+                    elif resp.status_code == 404:
+                        # Model not found or deprecated, skip to next model immediately
+                        break
                     else:
-                        # Non-retryable on this specific model (e.g. 404 model deprecated), try next fallback model
                         break
                 except requests.exceptions.RequestException as e:
                     last_error = str(e)
                     import time
                     time.sleep(1.0 * (attempt + 1))
-                    
+
+        # If static priority list was exhausted, dynamically fetch models list enabled for this key
+        live_models = self._fetch_live_gemini_models()
+        for model_name in live_models:
+            if model_name in attempted_models:
+                continue
+            attempted_models.add(model_name)
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+            try:
+                resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=self.timeout)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        return candidates[0]["content"]["parts"][0]["text"]
+            except Exception:
+                continue
+
         raise RuntimeError(last_error or f"Gemini API failed across attempts and fallback models.")
 
     @staticmethod
