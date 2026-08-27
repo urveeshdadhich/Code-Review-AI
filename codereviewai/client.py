@@ -6,7 +6,7 @@ import requests
 from codereviewai.models import CodeReviewResult
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-3.6-flash",
+    "gemini": "gemini-3.1-pro-preview",
     "openai": "gpt-4o",
     "anthropic": "claude-3-5-sonnet-20241022",
 }
@@ -36,7 +36,7 @@ class CodeReviewClient:
     def __init__(self, provider: str, api_key: str, model: Optional[str] = None, timeout: int = 120):
         self.provider = provider.lower()
         self.api_key = api_key
-        self.model = model or DEFAULT_MODELS.get(self.provider, "gemini-3.6-flash")
+        self.model = model or DEFAULT_MODELS.get(self.provider, "gemini-3.1-pro-preview")
         self.timeout = timeout
 
     def review_code(self, file_content: str, filename: str = "code") -> CodeReviewResult:
@@ -95,8 +95,10 @@ class CodeReviewClient:
 
     def _call_gemini(self, prompt: str) -> str:
         fallback_models = [self.model]
-        if self.model == "gemini-3.6-flash":
-            fallback_models.extend(["gemini-2.5-pro", "gemini-2.0-flash"])
+        candidates_pool = ["gemini-3.1-pro-preview", "gemini-3.6-flash", "gemini-2.0-flash"]
+        for m in candidates_pool:
+            if m not in fallback_models:
+                fallback_models.append(m)
 
         last_error = None
         for model_name in fallback_models:
@@ -107,7 +109,7 @@ class CodeReviewClient:
                 "generationConfig": {"responseMimeType": "application/json"},
             }
             
-            for attempt in range(3):
+            for attempt in range(2):
                 try:
                     resp = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
                     if resp.status_code == 200:
@@ -117,17 +119,18 @@ class CodeReviewClient:
                             raise RuntimeError(f"Gemini API Error: No valid content in response ({data})")
                         return candidates[0]["content"]["parts"][0]["text"]
                     
+                    last_error = f"Gemini API Error ({resp.status_code}): {resp.text}"
                     if resp.status_code in (429, 500, 502, 503, 504):
-                        last_error = f"Gemini API Error ({resp.status_code}): {resp.text}"
                         import time
-                        time.sleep(1.5 * (attempt + 1))
+                        time.sleep(1.0 * (attempt + 1))
                         continue
                     else:
-                        raise RuntimeError(f"Gemini API Error ({resp.status_code}): {resp.text}")
+                        # Non-retryable on this specific model (e.g. 404 model deprecated), try next fallback model
+                        break
                 except requests.exceptions.RequestException as e:
                     last_error = str(e)
                     import time
-                    time.sleep(1.5 * (attempt + 1))
+                    time.sleep(1.0 * (attempt + 1))
                     
         raise RuntimeError(last_error or f"Gemini API failed across attempts and fallback models.")
 
