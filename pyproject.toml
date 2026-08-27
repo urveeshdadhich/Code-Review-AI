@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code-review-ai"
+version = "1.0.0"
+description = "An AI-powered Code Review CLI designed to run entirely within your terminal."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "CodeReviewAI Team" }
+]
+dependencies = [
+    "requests>=2.31.0",
+    "pydantic>=2.0.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+code-review-ai = "codereviewai.cli:main"
+codereviewai = "codereviewai.cli:main"
+cr = "codereviewai.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["codereviewai*"]
