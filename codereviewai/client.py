@@ -94,20 +94,42 @@ class CodeReviewClient:
         return data["content"][0]["text"]
 
     def _call_gemini(self, prompt: str) -> str:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
-        headers = {"Content-Type": "application/json"}
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"responseMimeType": "application/json"},
-        }
-        resp = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
-        if resp.status_code != 200:
-            raise RuntimeError(f"Gemini API Error ({resp.status_code}): {resp.text}")
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        if not candidates or "content" not in candidates[0]:
-            raise RuntimeError(f"Gemini API Error: No valid content in response ({data})")
-        return candidates[0]["content"]["parts"][0]["text"]
+        fallback_models = [self.model]
+        if self.model == "gemini-3.6-flash":
+            fallback_models.extend(["gemini-2.5-pro", "gemini-2.0-flash"])
+
+        last_error = None
+        for model_name in fallback_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+            headers = {"Content-Type": "application/json"}
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"responseMimeType": "application/json"},
+            }
+            
+            for attempt in range(3):
+                try:
+                    resp = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        candidates = data.get("candidates", [])
+                        if not candidates or "content" not in candidates[0]:
+                            raise RuntimeError(f"Gemini API Error: No valid content in response ({data})")
+                        return candidates[0]["content"]["parts"][0]["text"]
+                    
+                    if resp.status_code in (429, 500, 502, 503, 504):
+                        last_error = f"Gemini API Error ({resp.status_code}): {resp.text}"
+                        import time
+                        time.sleep(1.5 * (attempt + 1))
+                        continue
+                    else:
+                        raise RuntimeError(f"Gemini API Error ({resp.status_code}): {resp.text}")
+                except requests.exceptions.RequestException as e:
+                    last_error = str(e)
+                    import time
+                    time.sleep(1.5 * (attempt + 1))
+                    
+        raise RuntimeError(last_error or f"Gemini API failed across attempts and fallback models.")
 
     @staticmethod
     def _extract_json(text: str) -> str:
