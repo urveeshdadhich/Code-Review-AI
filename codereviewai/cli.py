@@ -111,7 +111,7 @@ def main():
         console.print(f"[bold yellow]Warning:[/bold yellow] No supported source files found in [cyan]{target_path}[/cyan].")
         sys.exit(0)
 
-    chosen_model = args.model or DEFAULT_MODELS.get(provider, "gemini-2.5-flash")
+    chosen_model = args.model or DEFAULT_MODELS.get(provider, "gemini-3.6-flash")
     console.print(f"[bold cyan]Starting AI Code Review on:[/bold cyan] [white]{target_path}[/white]")
     console.print(
         f"[yellow]Analyzing using {provider.upper()} ({chosen_model}) across {len(files_to_review)} file(s)... Please wait.[/yellow]\n"

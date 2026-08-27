@@ -6,7 +6,7 @@ import requests
 from codereviewai.models import CodeReviewResult
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-2.5-flash",
+    "gemini": "gemini-3.6-flash",
     "openai": "gpt-4o",
     "anthropic": "claude-3-5-sonnet-20241022",
 }
@@ -36,7 +36,7 @@ class CodeReviewClient:
     def __init__(self, provider: str, api_key: str, model: Optional[str] = None, timeout: int = 120):
         self.provider = provider.lower()
         self.api_key = api_key
-        self.model = model or DEFAULT_MODELS.get(self.provider, "gemini-2.5-flash")
+        self.model = model or DEFAULT_MODELS.get(self.provider, "gemini-3.6-flash")
         self.timeout = timeout
 
     def review_code(self, file_content: str, filename: str = "code") -> CodeReviewResult:
